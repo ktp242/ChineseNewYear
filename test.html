@@ -1,0 +1,42 @@
+<html>
+
+<head>
+<script type="text/javascript">
+
+function init(){
+
+	var fishDiv = document.getElementById("fish");
+    var fishImage = document.getElementById("fishPic");
+    var fishCanvas = document.getElementById("fishCanvas");
+    var fishCanvasCtx = fishCanvas.getContext("2d");
+    fishCanvasCtx.drawImage(fishImage,0,0,388,338);
+
+
+	document.body.addEventListener("mousemove", MoveInFish, false);
+
+
+	
+	function MoveInFish(){
+    	x = event.clientX;
+    	y = event.clientY;
+    	
+
+        fishDiv.style.left = x-106;
+
+
+    	console.log(x);
+    }
+}
+
+
+</script>
+
+</head>
+<body onload="init()">
+<div id="fish">
+<canvas id="fishCanvas" width="388" height="338"></canvas>
+</div>
+<img id="fishPic" src="images/fishIntro.png" width="388" height="338" style="left:0; top:0; position:fixed; visibility:hidden;">
+
+</body>
+</html>

@@ -1,0 +1,623 @@
+<html>
+ 
+ <head>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <title>New Year's Greeting</title>
+
+   <script type="text/javascript">
+
+   var title01Width=0;
+   var title02Height=0;
+   var fadeInCount=0;
+   var tableHeight=0;
+   var fishEaten=false;
+   var dumplingEaten=false;
+   var kueiEaten=false;
+   var fishBox;
+   var x;
+   var y;
+   var hasVideo=false;
+   var myVideo=null;
+   var map = [];
+   var changeNumber=0;
+   var full=0;
+   var congratCount=0;
+    
+
+   function init(){
+
+   	// set up the local video object
+
+     // way to get the video depends on different browsers 
+     window.URL = window.URL || window.webkitURL || window.mozURL || window.msURL;
+     navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+
+     // if user say yes to the permission to open the camera
+     if (navigator.getUserMedia) 
+     {
+       navigator.getUserMedia({video: true, audio: true}, 
+         function(stream) {
+          myStream = stream;
+                                                    // where the stream to be shown in the HTML
+                                                    myVideo = document.getElementById('myVideo');
+                                                    hasVideo=true;
+                                                    // fill the stream into video tag
+                                                    myVideo.src = window.URL.createObjectURL(stream) || stream;
+                                                    myVideo.play();                                                                    }, 
+                                                    function(err) {
+                                                      console.log('Failed to get local stream' ,err);
+                                                    }
+                                                    );
+     }
+
+     function drawScreen(){
+
+      if(!hasVideo)
+        return;
+
+      // section of my canvas and put video into it
+      var myCanvas = document.getElementById("myCanvas");
+      var context = mySphere.getContext("2d");
+
+      //Background
+      context.fillStyle = '#ffffaa';
+
+
+     // play video in canvas at position x=0, y=0
+     context.drawImage(myVideo , 0, 0, 640, 640, 0, 0, 320, 320);
+
+
+     // the sphere canvas
+     mySphere = document.getElementById("mySphere");
+     mySphereCtx = mySphere.getContext("2d");
+
+     // the data from context and mySphereCtx, which working with exec() and translate()
+     var videoBit = mySphereCtx.getImageData(40, 0, 240,240);
+     var texture = context.getImageData(40, 0, 240,240);
+
+
+     // the spherize effect manipulator
+     var spherize = function(px,py) {
+      var x = px-videoBit.width/2;
+      var y = py-videoBit.height/2;
+      var r = Math.sqrt(x*x+y*y);
+      var maxr = videoBit.width/2;
+      if (r>maxr) return {
+        'x':px,
+        'y':py
+      }
+      var a = Math.atan2(y,x);
+      var k = (r/maxr)*(r/maxr)*changeNumber+(1-changeNumber);
+      var dx = Math.cos(a)*r*k;
+      var dy = Math.sin(a)*r*k;
+      return {
+        'x': dx+videoBit.width/2,
+        'y': dy+videoBit.height/2
+      }
+    }
+
+    
+    // put the adjusted data into the contour
+    var exec = function(videoBit, texture) {
+      var height = videoBit.height;
+      var width = videoBit.width;
+      var colorat = function(x,y,channel) {
+        return texture.data[(x+y*height)*4+channel];
+      }
+      for (var j=0; j<height; j++) {
+        for (var i=0; i<width; i++) {
+          var u = map[(i+j*height)*2];
+          var v = map[(i+j*height)*2+1];
+          var x = Math.floor(u);
+          var y = Math.floor(v);
+          var kx = u-x;
+          var ky = v-y;
+          for (var c=0; c<4; c++) {
+            videoBit.data[(i+j*height)*4+c] =
+            (colorat(x,y  ,c)*(1-kx) + colorat(x+1,y  ,c)*kx) * (1-ky) +
+            (colorat(x,y+1,c)*(1-kx) + colorat(x+1,y+1,c)*kx) * (ky);
+          }
+        }
+      }
+    }
+
+    // grab pixel data after manipulator adjust it and map it  
+    var setTranslate = function() {
+      for (var y=0; y<videoBit.height; y++) {
+        for (var x=0; x<videoBit.width; x++) {
+          var t = spherize(x,y);
+          map[(x+y*videoBit.height)*2+0] = Math.max(Math.min(t.x,videoBit.height-1),0);
+          map[(x+y*videoBit.height)*2+1] = Math.max(Math.min(t.y,videoBit.height-1),0);
+        }
+      }
+    }
+
+    setTranslate();
+    exec(videoBit,texture);
+    mySphereCtx.putImageData(videoBit, 40 ,0);
+
+    // console.log("drawScreen works");
+
+  }
+
+  
+
+  var title01=document.getElementById("myTitle01");
+	var title01Ctx=title01.getContext("2d");
+	title01Ctx.globalAlpha = 0.5;
+	var title01Img=document.getElementById("title01");
+
+	var title02=document.getElementById("myTitle02");
+	var title02Ctx=title02.getContext("2d");
+	title02Ctx.globalAlpha = 0.5;
+	var title02Img=document.getElementById("title02");
+
+	var table=document.getElementById("myTable");
+	var tableCtx=table.getContext("2d");
+	var tableImg=document.getElementById("table");
+
+	var fishCanvas=document.getElementById("myFish");
+	var fishCanvasCtx=fishCanvas.getContext("2d");
+	var fishImg=document.getElementById("fish");
+	
+	var dumplingCanvas=document.getElementById("myDumpling");
+	var dumplingCanvasCtx=dumplingCanvas.getContext("2d");
+	var dumplingImg=document.getElementById("dumpling");
+	
+	var kueiCanvas=document.getElementById("myKuei");
+	var kueiCanvasCtx=kueiCanvas.getContext("2d");
+	var kueiImg=document.getElementById("kuei");
+		
+
+   	function myTimer(){
+     setInterval(function(){
+     
+     if (title01Width<1450){
+         title01Width = title01Width+50;
+         title01Ctx.drawImage(title01Img,0,0,title01Width,246,0,0,title01Width,246);
+         }
+
+     if (title01Width==1450 && title02Height<354){
+    	 title02Height = title02Height+20;
+    	 title02Ctx.drawImage(title02Img,0,0,1350,title02Height,0,0,1350,title02Height);
+        }
+
+     if(title01Width==1450 && title02Height==360){
+     	fadeInCount++;
+       }
+
+     if(fadeInCount==100){
+     	title01Ctx.clearRect(0,0,1350,246);
+     	title02Ctx.clearRect(0,0,1350,354);
+     	title01Ctx.globalAlpha = 0.3;
+     	title02Ctx.globalAlpha = 0.3;
+     	title01Ctx.drawImage(title01Img,0,0,title01Width,246,0,0,title01Width,246);
+     	title02Ctx.drawImage(title02Img,0,0,1350,title02Height,0,0,1350,title02Height);
+       }
+
+       if (fadeInCount>100 && tableHeight<400) {
+       	tableHeight = tableHeight+20;
+       	tableCtx.clearRect(0,0,1350,408);
+     	  tableCtx.drawImage(tableImg,0,0,1350,tableHeight,0,408-tableHeight,1350,tableHeight);
+       }
+
+       if (tableHeight==380 && tableHeight<400) {
+        fishCanvasCtx.drawImage(fishImg,0,0,312,187,0,0,312,187);
+        dumplingCanvasCtx.drawImage(dumplingImg,0,0);
+        kueiCanvasCtx.drawImage(kueiImg,0,0);
+        setInterval(drawScreen, 33);
+        tableCtx.drawImage(tableImg,0,0,1350,tableHeight,0,408-tableHeight,1350,tableHeight);
+       }
+       
+       //console.log(tableHeight);
+       
+     }, 50);
+    }
+
+    myTimer();
+
+    function myResult(){
+
+      lightBoxCongrats = document.createElement('div');
+      lightBoxCongrats.id= "congratsBox";
+      document.body.appendChild(lightBoxCongrats);
+      congratsCanvas = document.createElement('canvas');
+      congratsCanvas.id="congratsCanvas";
+      congratsCanvas.width = 845;
+      congratsCanvas.height = 200;
+      lightBoxCongrats.appendChild(congratsCanvas);
+
+      congratsCanvasCtx = congratsCanvas.getContext("2d");
+      var congratImg = document.getElementById("congratImg");
+      congratsCanvasCtx.globalAlpha = 0.3;
+      
+
+      lightBoxBtn = document.createElement('div');
+      lightBoxBtn.id="btn";
+      document.body.appendChild(lightBoxBtn);
+      btnCanvas = document.createElement('canvas');
+      btnCanvas.id="btnCanvas";
+      btnCanvas.width = 149;
+      btnCanvas.height = 49;
+      lightBoxBtn.appendChild(btnCanvas);
+
+      btnCanvasCtx = btnCanvas.getContext("2d");
+      var btnImg = document.getElementById("btnImg");
+      btnCanvasCtx.globalAlpha = 0.3;
+
+      
+      setInterval(function(){
+        if (congratCount<10) {
+          congratCount ++;
+          congratsCanvasCtx.drawImage(congratImg,0,0,845,200,0,0,845,200);
+          btnCanvasCtx.drawImage(btnImg,0,0,149,49,0,0,149,49);
+        };
+      },90);
+
+      btn.addEventListener("mouseover", HoverInBtn, false);
+      btn.addEventListener("mouseout", HoverOutBtn, false);
+      btn.addEventListener("mousedown", resetTable, false);
+
+      // console.log("full");
+     
+    }
+
+    
+
+    myFish.addEventListener("mouseover", HoverInFish, false);
+    myFish.addEventListener("mouseout", HoverOutFish, false);
+    myFish.addEventListener("mousedown", DownFish, false);
+    myFish.addEventListener("mousemove", MoveInFish, false);
+
+    myDumpling.addEventListener("mouseover", HoverInDumpling, false);
+    myDumpling.addEventListener("mouseout", HoverOutDumpling, false);
+    myDumpling.addEventListener("mousedown", DownDumpling, false);
+    myDumpling.addEventListener("mousemove", MoveInDumpling, false);
+
+    myKuei.addEventListener("mouseover", HoverInKuei, false);
+    myKuei.addEventListener("mouseout", HoverOutKuei, false);
+    myKuei.addEventListener("mousedown", DownKuei, false);
+    myKuei.addEventListener("mousemove", MoveInKuei, false);
+
+    
+
+    function HoverInFish(){
+    	if (tableHeight==400 && fishEaten == false) {
+    	fishCanvasCtx.clearRect(0,0,312,187);
+    	fishCanvasCtx.globalAlpha = 0.5;
+      fishCanvasCtx.drawImage(fishImg,0,0,312,187,0,0,312,187);
+
+      lightBoxFish = document.createElement('div');
+      lightBoxFish.id= "fishBox";
+      document.body.appendChild(lightBoxFish);
+      lightboxCanvas = document.createElement('canvas');
+      lightboxCanvas.id="lightboxCanvas";
+      lightboxCanvas.width = 388;
+      lightboxCanvas.height = 338;
+      lightBoxFish.appendChild(lightboxCanvas);       
+      }
+    }
+
+    function MoveInFish(){
+    	x = event.clientX;
+    	y = event.clientY;  	
+    	lightBoxFish.style.left = x-194;
+    	lightBoxFish.style.top = y-358;
+
+    	lightboxCanvasCtx = lightboxCanvas.getContext("2d");
+    	lightboxCanvasCtx.drawImage(fishIntro,0,0,388,338,0,0,388,338);
+    	// console.log(lightBoxFish.x);
+    }
+
+
+     function HoverOutFish(){
+     	if (tableHeight==400 && fishEaten == false) {
+    	fishCanvasCtx.clearRect(0,0,312,187);
+    	fishCanvasCtx.globalAlpha = 1;
+      fishCanvasCtx.drawImage(fishImg,0,0,312,187,0,0,312,187);
+      document.body.removeChild(lightBoxFish);
+        }
+    }
+
+    function DownFish(){
+     	if (tableHeight==400 && fishEaten == false) {
+    	fishCanvasCtx.clearRect(0,0,312,187);
+    	fishEaten = true;
+    	document.body.removeChild(lightBoxFish);
+      changeNumber = changeNumber+0.2;
+      full++;
+      if (full==3) {
+       congratCount=0;
+       myResult();
+       }
+      }
+    }
+
+
+
+
+    function HoverInDumpling(){
+    	if (tableHeight==400 && dumplingEaten == false) {
+    	dumplingCanvasCtx.clearRect(0,0,243,141);
+    	dumplingCanvasCtx.globalAlpha = 0.5;
+        dumplingCanvasCtx.drawImage(dumplingImg,0,0,243,141,0,0,243,141);
+
+        lightBoxFish = document.createElement('div');
+        lightBoxFish.id= "fishBox";
+        document.body.appendChild(lightBoxFish);
+        lightboxCanvas = document.createElement('canvas');
+        lightboxCanvas.id="lightboxCanvas";
+        lightboxCanvas.width = 388;
+        lightboxCanvas.height = 338;
+        lightBoxFish.appendChild(lightboxCanvas);
+        }
+    }
+
+    function HoverOutDumpling(){
+     	if (tableHeight==400 && dumplingEaten == false) {
+    	  dumplingCanvasCtx.clearRect(0,0,243,141);
+    	  dumplingCanvasCtx.globalAlpha = 1;
+        dumplingCanvasCtx.drawImage(dumplingImg,0,0,243,141,0,0,243,141);
+        document.body.removeChild(lightBoxFish);
+        }
+    }
+
+    function MoveInDumpling(){
+    	x = event.clientX;
+    	y = event.clientY;  	
+    	lightBoxFish.style.left = x-194;
+    	lightBoxFish.style.top = y-358;
+
+    	lightboxCanvasCtx = lightboxCanvas.getContext("2d");
+    	lightboxCanvasCtx.drawImage(dumplingIntro,0,0,388,338,0,0,388,338);
+    	// console.log(lightBoxFish.x);
+    }
+
+    function DownDumpling(){
+     	if (tableHeight==400 && dumplingEaten == false) {
+    	dumplingCanvasCtx.clearRect(0,0,312,187);
+    	dumplingEaten = true;
+    	document.body.removeChild(lightBoxFish);
+      changeNumber = changeNumber+0.2;
+      full++;
+      if (full==3) {
+       congratCount=0;
+       myResult();
+       }
+      }
+    }
+
+
+
+    function HoverInKuei(){
+    	if (tableHeight==400 && kueiEaten == false) {
+    	kueiCanvasCtx.clearRect(0,0,165,133);
+    	kueiCanvasCtx.globalAlpha = 0.5;
+      kueiCanvasCtx.drawImage(kueiImg,0,0,165,133,0,0,165,133);
+
+      lightBoxFish = document.createElement('div');
+      lightBoxFish.id= "fishBox";
+      document.body.appendChild(lightBoxFish);
+      lightboxCanvas = document.createElement('canvas');
+      lightboxCanvas.id="lightboxCanvas";
+      lightboxCanvas.width = 388;
+      lightboxCanvas.height = 338;
+      lightBoxFish.appendChild(lightboxCanvas);
+      }
+    }
+
+     function HoverOutKuei(){
+     	if (tableHeight==400 && kueiEaten == false) {
+    	kueiCanvasCtx.clearRect(0,0,165,133);
+    	kueiCanvasCtx.globalAlpha = 1;
+      kueiCanvasCtx.drawImage(kueiImg,0,0,165,133,0,0,165,133);
+      document.body.removeChild(lightBoxFish);
+      }
+    }
+
+    function MoveInKuei(){
+    	x = event.clientX;
+    	y = event.clientY;  	
+    	lightBoxFish.style.left = x-194;
+    	lightBoxFish.style.top = y-358;
+
+    	lightboxCanvasCtx = lightboxCanvas.getContext("2d");
+    	lightboxCanvasCtx.drawImage(kueiIntro,0,0,388,338,0,0,388,338);
+    	// console.log(lightBoxFish.x);
+    }
+
+    function DownKuei(){
+     	if (tableHeight==400 && kueiEaten == false) {
+    	kueiCanvasCtx.clearRect(0,0,312,187);
+    	kueiEaten = true;
+    	document.body.removeChild(lightBoxFish);
+      changeNumber = changeNumber+0.2;
+      full++;
+      if (full==3) {
+       congratCount=0;
+       myResult();
+       }
+      }
+    }
+
+
+    function HoverInBtn(){
+
+      btnCanvasCtx.clearRect(0,0,149,49);
+      btnCanvasCtx.globalAlpha = 0.5;
+      btnCanvasCtx.drawImage(btnImg,0,0,149,49,0,0,149,49);
+
+    }
+
+    function HoverOutBtn(){
+
+      btnCanvasCtx.clearRect(0,0,149,49);
+      btnCanvasCtx.globalAlpha = 1;
+      btnCanvasCtx.drawImage(btnImg,0,0,149,49,0,0,149,49);
+
+    }
+
+    function resetTable(){
+
+      document.body.removeChild(congratsBox);
+      document.body.removeChild(btn);
+      
+      fishCanvasCtx.globalAlpha = 1;
+      dumplingCanvasCtx.globalAlpha = 1;
+      kueiCanvasCtx.globalAlpha = 1;
+      
+      fishCanvasCtx.drawImage(fishImg,0,0,312,187,0,0,312,187);
+      dumplingCanvasCtx.drawImage(dumplingImg,0,0);
+      kueiCanvasCtx.drawImage(kueiImg,0,0);
+
+      fishEaten=false;
+      dumplingEaten=false;
+      kueiEaten=false;
+      
+      changeNumber=0;
+      full=0;
+
+   }
+
+   }
+
+   </script>
+   
+   <style type="text/css">
+
+   body
+   {
+     background-color: #ff1f1f;
+     margin-left: 0px;
+     margin-right: 0px; 
+     margin-bottom: -1px;
+   }
+
+   #content
+   {
+   	height: 600px;
+    padding-bottom: 40px;
+    border-style:none;
+    border-width:0;
+    position: relative;
+   }
+
+   #footer
+   {
+   	width:100%;
+   	height: 40px;
+   	left:0;
+   	margin-top: -40px;
+   	margin-bottom: 0px;
+   	background-color: #222222;
+   	border-style:none;
+    border-width:0;
+    position: relative;
+    clear: both;
+   }
+
+   #fishBox
+   {
+   	top:200;
+   	left:200;
+   	width:auto;
+   	height:auto;
+	  position: absolute;
+   }
+
+   #lightboxCanvas
+   {
+   	width:388;
+   	height:338;
+   	position: absolute;
+   }
+
+   #fishBox
+   {
+    top:200;
+    left:200;
+    width:auto;
+    height:auto;
+    position: absolute;
+   }
+
+   #congratsBox
+   {
+    top:300;
+    left:252;
+    width:auto;
+    height:auto;
+    position: absolute;
+
+   }
+
+   #congratsCanvas
+   {
+    position: absolute;
+   }
+
+   #btn
+   {
+    top:430;
+    left:800;
+    width:auto;
+    height:auto;
+    position: absolute;
+   }
+
+   #btnCanvas
+   {
+    position: absolute;
+   }
+
+   </style>
+
+ </head>
+ 
+ <body onload="init()">  
+  <div id="content">
+    <div id="title">
+
+    <canvas id="myTitle01" width="1350" height="246" style="margin-top:0"></canvas>
+    <canvas id="myTitle02" width="1350" height="354" style="margin-top:0"></canvas>
+    <canvas id="myCanvas" width="300" height="240" style = "margin-top:-550; margin-left:520"></canvas>
+    <canvas id="mySphere" width= "300" height= "240" style = "margin-top:-550; margin-left:520"></canvas>
+    <canvas id="myTable" width="1350" height="408" style="margin-top:-408"></canvas>
+    <canvas id="myFish" width="312" height="187" style="top:400; left:120; position:absolute;"></canvas>
+    <canvas id="myDumpling" width="243" height="141" style="top:430; left:760; position:absolute;"></canvas>
+    <canvas id="myKuei" width="165" height="133" style="top:380; left:1060; position:absolute;"></canvas>
+    
+    <img id="title01" src="images/CNY/title01.jpg" width="50%" height="auto" style="left:0; top:0; position:fixed; visibility:hidden;">
+
+    <img id="title02" src="images/CNY/title02.jpg" width="50%" height="auto" style="left:0; top:0; position:fixed; visibility:hidden;">
+
+    <img id="table" src="images/CNY/table.png" width="50%" height="auto" style="left:0; top:0; position:fixed; visibility:hidden;">
+
+    <img id="fish" src="images/CNY/fish.png" width="50%" height="auto" style="left:0; top:0; position:fixed; visibility:hidden;">
+
+    <img id="dumpling" src="images/CNY/dumpling.png" width="50%" height="auto" style="left:0; top:0; position:fixed; visibility:hidden;">
+
+    <img id="kuei" src="images/CNY/kuei.png" width="50%" height="auto" style="left:0; top:0; position:fixed; visibility:hidden;">
+
+    <img id="fishIntro" src="images/CNY/fishIntro.png" width="388" height="338" style="left:0; top:0; position:fixed; visibility:hidden;">
+
+    <img id="dumplingIntro" src="images/CNY/dumplingIntro.png" width="388" height="338" style="left:0; top:0; position:fixed; visibility:hidden;">
+
+    <img id="kueiIntro" src="images/CNY/kueiIntro.png" width="388" height="338" style="left:0; top:0; position:absolute; visibility:hidden;">
+
+    <img id="congratImg" src="images/CNY/congrat.png" width="845" height="200" style="left:0; top:0; position:absolute; visibility:hidden;">
+
+    <img id="btnImg" src="images/CNY/btn.png" width="149" height="49" style="left:0; top:0; position:absolute; visibility:hidden;">
+
+    </div>
+
+    <video id="myVideo" width="320" height="240" style="left:0; top:0; border:1px solid #000000; position:fixed; visibility:hidden;"> </video>
+
+  </div>
+  
+  <div id="footer">
+  </div>
+
+ </body>
+
+</html>
